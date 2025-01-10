@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gestion-formation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gestion-formation
+  template:
+    metadata:
+      labels:
+        app: gestion-formation
+    spec:
+      containers:
+      - name: gestion-formation
+        image: your-dockerhub-username/gestion-formation:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DB_HOST
+          value: mysql
+        - name: DB_USER
+          value: root
+        - name: DB_PASSWORD
+          value: ""
+        - name: DB_NAME
+          value: wamp_db_name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gestion-formation-service
+spec:
+  selector:
+    app: gestion-formation
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+  type: NodePort
