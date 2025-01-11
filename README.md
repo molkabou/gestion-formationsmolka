@@ -1,236 +1,109 @@
-# Documentation Détaillée : Instructions de Déploiement, Configuration et Utilisation
+# **Documentation du Projet : Gestion de Formation**
 
-## 1. Aperçu du Projet
-Ce projet consiste à déployer une application de gestion des formations avec des outils d’observabilité et de monitoring utilisant Prometheus et Grafana sur Kubernetes (via Minikube).
+## **Introduction**
+Ce projet vise à déployer une application de gestion de formation professionnelle. L’application comprend des services backend (Node.js) et une base de données MySQL. Le projet met à profit des outils modernes comme Docker, Kubernetes, Helm, et ArgoCD pour assurer un déploiement automatisé et scalable. En outre, Prometheus et Grafana sont intégrés pour le monitoring des performances.
 
-L'objectif est de garantir un suivi efficace des métriques de l'application et du cluster.
+## **Pré-requis**
 
----
+### Logiciels nécessaires
+1. **Docker** : Pour la conteneurisation des services.
+2. **Kubernetes** : Pour orchestrer les conteneurs.
+3. **Helm** : Pour la gestion des déploiements Kubernetes.
+4. **ArgoCD** : Pour mettre en place une stratégie GitOps.
+5. **Prometheus** : Pour collecter les métriques de l’application.
+6. **Grafana** : Pour visualiser les métriques via des tableaux de bord personnalisés.
 
-## 2. Prérequis
+### Environnement
+- Système d’exploitation : Windows, Linux ou macOS
+- Accès à Internet pour télécharger les images Docker et les dépendances.
+- Un cluster Kubernetes fonctionnel (par ex. Minikube, Kind, ou k3s).
 
-Avant de commencer, assurez-vous d'avoir :
+## **Instructions de déploiement**
 
-1. **Outils d’installation** :
-   - Docker
-   - Minikube
-   - Kubectl
-   - Helm
-   - Curl
-2. **Un cluster Kubernetes fonctionnel** :
-   - Minikube ou tout autre cluster local.
-3. **Accès à Docker Hub** :
-   - Vous devez disposer d'un compte Docker Hub pour pousser et tirer des images Docker.
-4. **Droits Administrateurs** :
-   - Pour exécuter les commandes requises sur votre système.
-
----
-
-## 3. Instructions de Déploiement
-
-### 3.1 Configuration de Minikube
-
-1. **Démarrez Minikube :**
+### **Déploiement avec Docker Compose**
+1. Clonez le dépôt Git :
    ```bash
-   minikube start
+   git clone <URL-du-dépôt>
+   cd gestion-formation
    ```
-
-2. **Vérifiez que le cluster est actif :**
+2. Construisez les images Docker :
    ```bash
-   kubectl get nodes
+   docker-compose build
    ```
-
-3. **Activer les addons utiles :**
+3. Lancez les services :
    ```bash
-   minikube addons enable ingress
-   minikube addons enable metrics-server
+   docker-compose up
    ```
+4. Accédez à l'application via : `http://localhost:5000`.
 
-### 3.2 Construction et Poussée de l'Image Docker
+### **Déploiement sur Kubernetes avec Helm et ArgoCD**
 
-1. **Construisez l’image Docker de l’application :**
-   ```bash
-   docker build -t <votre-utilisateur-docker>/gestion-formation:latest .
-   ```
-
-2. **Connectez-vous à Docker Hub :**
-   ```bash
-   docker login
-   ```
-
-3. **Poussez l’image dans Docker Hub :**
-   ```bash
-   docker push <votre-utilisateur-docker>/gestion-formation:latest
-   ```
-
-### 3.3 Création des Manifestes Kubernetes
-
-1. **Fichier `deployment.yaml` :**
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: gestion-formation
-     labels:
-       app: gestion-formation
-   spec:
-     replicas: 2
-     selector:
-       matchLabels:
-         app: gestion-formation
-     template:
-       metadata:
-         labels:
-           app: gestion-formation
-       spec:
-         containers:
-         - name: gestion-formation
-           image: <votre-utilisateur-docker>/gestion-formation:latest
-           ports:
-           - containerPort: 5000
-           env:
-           - name: DB_HOST
-             value: mysql
-           - name: DB_USER
-             value: root
-           - name: DB_PASSWORD
-             value: root
-   ```
-
-2. **Fichier `service.yaml` :**
-   ```yaml
-   apiVersion: v1
-   kind: Service
-   metadata:
-     name: gestion-formation-service
-   spec:
-     selector:
-       app: gestion-formation
-     ports:
-     - protocol: TCP
-       port: 80
-       targetPort: 5000
-     type: NodePort
-   ```
-
-3. **Appliquez les manifestes :**
-   ```bash
-   kubectl apply -f deployment.yaml
-   kubectl apply -f service.yaml
-   ```
-
-4. **Vérifiez que les pods sont en cours d'exécution :**
-   ```bash
-   kubectl get pods
-   ```
-
-### 3.4 Configuration de Prometheus et Grafana
-
-#### a) Installation de Prometheus
-
-1. **Ajoutez le dépôt Helm de Prometheus :**
+#### **Avec Helm**
+1. Ajoutez les dépôts Helm requis :
    ```bash
    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
    helm repo update
    ```
-
-2. **Installez Prometheus dans le namespace `monitoring` :**
+2. Déployez l’application :
    ```bash
-   kubectl create namespace monitoring
+   helm install gestion-formation helm/gestion-formation --namespace default
+   ```
+3. Assurez-vous que les pods sont actifs :
+   ```bash
+   kubectl get pods
+   ```
+4. Accédez à l'application via l'adresse IP du service exposé :
+   ```bash
+   kubectl get svc gestion-formation-service
+   ```
+
+#### **Avec ArgoCD**
+1. Créez une application ArgoCD :
+   ```yaml
+   apiVersion: argoproj.io/v1alpha1
+   kind: Application
+   metadata:
+     name: gestion-formation
+   spec:
+     project: default
+     source:
+       repoURL: 'https://github.com/<votre-repo>'
+       targetRevision: HEAD
+       path: helm/gestion-formation
+     destination:
+       server: 'https://kubernetes.default.svc'
+       namespace: default
+     syncPolicy:
+       automated:
+         prune: true
+         selfHeal: true
+   ```
+2. Appliquez le fichier YAML :
+   ```bash
+   kubectl apply -f argocd/argocd-application.yaml
+   ```
+3. Accédez à l’interface ArgoCD pour surveiller le déploiement.
+
+### **Monitoring avec Prometheus et Grafana**
+1. Installez Prometheus :
+   ```bash
    helm install prometheus prometheus-community/prometheus --namespace monitoring
    ```
-
-3. **Exposez Prometheus en local :**
+2. Installez Grafana :
    ```bash
-   kubectl port-forward svc/prometheus-server -n monitoring 9090:80
+   helm install grafana prometheus-community/grafana --namespace monitoring
    ```
+3. Configurez Prometheus comme source de données dans Grafana :
+   - URL : `http://prometheus-server.monitoring.svc.cluster.local`
+   - Testez et sauvegardez.
+4. Importez un tableau de bord JSON depuis [Grafana Dashboards](https://grafana.com/grafana/dashboards).
 
-#### b) Installation de Grafana
+## **Utilisation**
+- Accédez à l'application via l'adresse IP ou le nom de domaine configuré.
+- Consultez les tableaux de bord Grafana pour les métriques sur l’application et le cluster Kubernetes.
 
-1. **Ajoutez le dépôt Helm de Grafana :**
-   ```bash
-   helm repo add grafana https://grafana.github.io/helm-charts
-   helm repo update
-   ```
 
-2. **Installez Grafana dans le namespace `monitoring` :**
-   ```bash
-   helm install grafana grafana/grafana --namespace monitoring
-   ```
 
-3. **Exposez Grafana en local :**
-   ```bash
-   kubectl port-forward svc/grafana -n monitoring 3000:80
-   ```
-
-4. **Connectez-vous à Grafana :**
-   - URL : [http://localhost:3000](http://localhost:3000)
-   - Identifiants par défaut :
-     - Nom d’utilisateur : `admin`
-     - Mot de passe : `prom-operator` (ou générez-le en consultant le secret Kubernetes).
-
-5. **Ajoutez Prometheus comme source de données :**
-   - Allez dans **Configuration > Data Sources**.
-   - Cliquez sur **Add Data Source** et choisissez **Prometheus**.
-   - URL : `http://prometheus-server.monitoring.svc.cluster.local`.
-   - Sauvegardez et testez la connexion.
-
-#### c) Importation des Dashboards Grafana
-
-1. **Téléchargez un dashboard préfait :**
-   - Allez sur le site officiel des dashboards Grafana : [https://grafana.com/grafana/dashboards](https://grafana.com/grafana/dashboards).
-   - Recherchez "Kubernetes" ou "Prometheus" et téléchargez un fichier JSON.
-
-2. **Importez-le dans Grafana :**
-   - Allez dans **Create > Import**.
-   - Importez le fichier JSON téléchargé.
-   - Associez-le à la source de données Prometheus.
-
----
-
-## 4. Utilisation
-
-### 4.1 Accès à l'Application
-1. **Obtenez l'URL exposée par Minikube :**
-   ```bash
-   minikube service gestion-formation-service --url
-   ```
-
-2. **Ouvrez l'URL dans un navigateur pour accéder à l'application.**
-
-### 4.2 Surveillance avec Prometheus et Grafana
-
-- **Prometheus** :
-  - Accédez à l'interface Prometheus via `http://localhost:9090`.
-  - Saisissez des requêtes PromQL pour explorer les métriques.
-
-- **Grafana** :
-  - Accédez aux dashboards à l’adresse `http://localhost:3000`.
-  - Visualisez les performances des pods, nœuds et ressources cluster.
-
----
-
-## 5. Résolution des Problèmes
-
-### Problèmes Communes
-1. **Pods en CrashLoopBackOff :**
-   - Inspectez les logs du pod :
-     ```bash
-     kubectl logs <nom-du-pod>
-     ```
-
-2. **Problèmes de DNS :**
-   - Assurez-vous que CoreDNS est fonctionnel :
-     ```bash
-     kubectl rollout restart deployment coredns -n kube-system
-     ```
-
-3. **Pas de données dans Grafana :**
-   - Vérifiez la connectivité entre Grafana et Prometheus.
-   - Testez l'URL Prometheus dans Grafana.
-
----
-
-## 6. Conclusion
-Ce guide couvre les étapes essentielles pour déployer et configurer l'application de gestion des formations avec des outils d’observabilité sur Kubernetes. Pour toute question supplémentaire, référez-vous à la documentation officielle de Kubernetes, Prometheus et Grafana.
+## **Conclusion**
+Ce projet fournit une solution complète pour déployer, surveiller et utiliser une application de gestion de formation. En suivant ces instructions, vous pouvez configurer un environnement fonctionnel et scalable.
 
