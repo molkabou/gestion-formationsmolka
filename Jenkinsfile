@@ -1,33 +1,52 @@
 pipeline {
     agent any
+
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('b639cd9c-96e4-4a50-9170-b55af835281e') // Remplacez par votre ID de credentials Docker Hub
         DOCKER_IMAGE = 'molkabouzaida/gestion-formation:latest'
     }
+
     stages {
-        stage('Checkout Code') {
+        stage('Checkout SCM') {
             steps {
-                git branch: 'main', url: 'https://github.com/molkabou/gestion-formationsmolka.git'
+                checkout scm
             }
         }
+
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %DOCKER_IMAGE% .'
-            }
-        }
-        stage('Login to Docker Hub') {
-            steps {
                 script {
-                    bat """
-                    echo %DOCKER_HUB_CREDENTIALS_PSW% | docker login -u %DOCKER_HUB_CREDENTIALS_USR% --password-stdin
-                    """
+                    sh 'docker build -t $DOCKER_IMAGE .'
                 }
             }
         }
+
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKER_HUB_PASSWORD')]) {
+                        sh """
+                        echo "$DOCKER_HUB_PASSWORD" | docker login -u "molkabouzaida" --password-stdin
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Push Docker Image') {
             steps {
-                bat 'docker push %DOCKER_IMAGE%'
+                script {
+                    sh 'docker push $DOCKER_IMAGE'
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Please check the logs for details.'
         }
     }
 }
