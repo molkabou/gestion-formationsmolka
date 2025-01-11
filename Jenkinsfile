@@ -1,31 +1,40 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials-id') // Remplacez par vos credentials
-        DOCKER_IMAGE = 'your-dockerhub-username/gestion-formation'
+        DOCKER_HUB_CREDENTIALS = credentials('b639cd9c-96e4-4a50-9170-b55af835281e') // ID des credentials affichés dans votre capture
+        DOCKER_IMAGE = 'molkabouzaida/gestion-formation:latest' // Nom de l'image Docker à créer
     }
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/votre-repo/gestion-formations.git' // Remplacez par votre URL Git
+                git branch: 'main', url: 'https://github.com/molkabou/gestion-formations.git'
             }
         }
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                script {
+                    sh '''
+                    docker build -t $DOCKER_IMAGE .
+                    '''
+                }
             }
         }
-        stage('Scan Docker Image') {
+        stage('Login to Docker Hub') {
             steps {
-                sh 'docker run --rm aquasec/trivy image $DOCKER_IMAGE'
+                script {
+                    sh '''
+                    echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin
+                    '''
+                }
             }
         }
         stage('Push Docker Image') {
             steps {
-                sh '''
-                echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin
-                docker push $DOCKER_IMAGE
-                '''
+                script {
+                    sh '''
+                    docker push $DOCKER_IMAGE
+                    '''
+                }
             }
         }
     }
