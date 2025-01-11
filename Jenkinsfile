@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'molkabouzaida/gestion-formation:latest'
+        DOCKER_IMAGE_NAME = "molkabouzaida/gestion-formation:latest" // Remplacez par le nom de votre image
     }
 
     stages {
@@ -12,10 +12,18 @@ pipeline {
             }
         }
 
+        stage('Checkout Code') {
+            steps {
+                git branch: 'master', url: 'https://github.com/molkabou/gestion-formationsmolka.git'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
+                    sh """
+                    docker build -t ${DOCKER_IMAGE_NAME} .
+                    """
                 }
             }
         }
@@ -23,9 +31,9 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKER_HUB_PASSWORD')]) {
+                    withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKER_HUB_TOKEN')]) {
                         sh """
-                        echo "$DOCKER_HUB_PASSWORD" | docker login -u "molkabouzaida" --password-stdin
+                        echo "$DOCKER_HUB_TOKEN" | docker login -u "molkabouzaida" --password-stdin
                         """
                     }
                 }
@@ -35,7 +43,9 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    sh 'docker push $DOCKER_IMAGE'
+                    sh """
+                    docker push ${DOCKER_IMAGE_NAME}
+                    """
                 }
             }
         }
@@ -43,10 +53,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Pipeline executed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Please check the logs for details.'
+            echo 'Pipeline execution failed.'
         }
     }
 }
