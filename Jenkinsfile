@@ -1,56 +1,45 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_IMAGE_NAME = "molkabouzaida/gestion-formation:latest" // Remplacez par le nom de votre image
+        DOCKER_HUB_CREDENTIALS = credentials('b639cd9c-96e4-4a50-9170-b55af835281e') // Remplacez par votre ID de credentials Docker Hub
+        DOCKER_IMAGE = 'molkabouzaida/gestion-formation:latest'
     }
-
     stages {
-        stage('Checkout SCM') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/molkabou/gestion-formationsmolka.git'
+                script {
+                    git branch: 'main', url: 'https://github.com/molkabou/gestion-formationsmolka.git'
+                }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh """
-                    docker build -t ${DOCKER_IMAGE_NAME} .
+                    bat """
+                    docker build -t ${DOCKER_IMAGE} .
                     """
                 }
             }
         }
-
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKER_HUB_TOKEN')]) {
-                        sh """
-                        echo "$DOCKER_HUB_TOKEN" | docker login -u "molkabouzaida" --password-stdin
-                        """
-                    }
+                    bat """
+                    echo ${DOCKER_HUB_CREDENTIALS_PSW} | docker login -u ${DOCKER_HUB_CREDENTIALS_USR} --password-stdin
+                    """
                 }
             }
         }
-
         stage('Push Docker Image') {
             steps {
                 script {
-                    sh """
-                    docker push ${DOCKER_IMAGE_NAME}
+                    bat """
+                    docker push ${DOCKER_IMAGE}
                     """
                 }
             }
         }
     }
-
     post {
         success {
             echo 'Pipeline executed successfully!'
