@@ -23,7 +23,7 @@ Ce projet vise à déployer une application de gestion de formation professionne
 ### **Déploiement avec Docker Compose**
 1. Clonez le dépôt Git :
    ```bash
-   git clone <URL-du-dépôt>
+   git clone https://github.com/molkabou/gestion-formationsmolka.git
    cd gestion-formation
    ```
 2. Construisez les images Docker :
@@ -67,7 +67,7 @@ Ce projet vise à déployer une application de gestion de formation professionne
    spec:
      project: default
      source:
-       repoURL: 'https://github.com/<votre-repo>'
+       repoURL: 'https://github.com/molkabou'
        targetRevision: HEAD
        path: helm/gestion-formation
      destination:
