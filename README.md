@@ -39,7 +39,7 @@ Ce projet DevOps consiste à conteneuriser, orchestrer et surveiller une applica
 ### 4.2. Conteneurisation
 Exécutez les commandes suivantes pour construire et exécuter le conteneur :
 ```bash
-docker build -t <votre-utilisateur-dockerhub>/gestion-formation:latest .
+docker build -t molkabou/gestion-formation:latest .
 docker-compose up
 
 ```
