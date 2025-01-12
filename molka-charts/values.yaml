@@ -1,66 +1,80 @@
-replicaCount: 1
+# Nombre de répliques pour votre application
+replicaCount: 2
 
+# Configuration de l'image Docker
 image:
-  repository: mysql
-  tag: "5.7"
+  repository: molkabouzaida/gestion-formation  # Remplacez par le nom de votre image Docker
+  tag: "latest"  # Version de l'image
   pullPolicy: IfNotPresent
 
+# Configuration du service Kubernetes
 service:
   type: ClusterIP
-  port: 3306
-  annotations: {} # Ajoutez des annotations si nécessaire
-  labels: {}      # Ajoutez des labels si nécessaire
+  port: 5000  # Port exposé par l'application
 
-ingress:
-  enabled: false
-  annotations: {}  # Annotations pour l'ingress
-  hosts:
-    - host: example.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []          # Configurez TLS si nécessaire
+# Configuration de l'autoscaling (HorizontalPodAutoscaler)
+autoscaling:
+  enabled: false  # Active ou désactive l'autoscaling
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 75
 
+# Variables d'environnement de votre application
+env:
+  - name: DB_HOST
+    value: mysql  # Nom du service MySQL dans Kubernetes
+  - name: DB_USER
+    value: root
+  - name: DB_PASSWORD
+    value: root
+
+# Configuration du stockage persistant pour MySQL
 persistence:
   enabled: true
-  storageClass: ""  # Définissez une classe de stockage spécifique si nécessaire
   accessMode: ReadWriteOnce
   size: 10Gi
 
+# Configuration de l'ingress (facultatif)
+ingress:
+  enabled: false
+  annotations: {}
+  hosts:
+    - host: gestion-formation.local  # Remplacez par votre domaine ou URL
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+# Ressources et limites pour les conteneurs
 resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
   requests:
-    cpu: 250m
-    memory: 256Mi
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
 
-nodeSelector: {}
-tolerations: []
-affinity: {}
-
-# Ajout de paramètres pour le compte de service
+# Configuration des règles RBAC et du compte de service
 serviceAccount:
-  create: true
-  name: ""
+  create: true  # Crée un nouveau compte de service
+  name: ""  # Nom personnalisé (laisser vide pour un nom généré automatiquement)
 
-securityContext:
+# Configuration des tests post-déploiement
+test:
   enabled: true
-  fsGroup: 1000
+  image:
+    repository: busybox
+    tag: latest
+    pullPolicy: IfNotPresent
+  command: ["/bin/sh", "-c"]
+  args: ["curl -f http://gestion-formation-service:5000 || exit 1"]
 
-# Liveness et readiness probes
-livenessProbe:
+# Configuration pour des métriques (Prometheus/Grafana)
+metrics:
   enabled: true
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-  successThreshold: 1
-
-readinessProbe:
-  enabled: true
-  initialDelaySeconds: 5
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-  successThreshold: 1
+  serviceMonitor:
+    enabled: true
+    additionalLabels: {}
+    namespace: monitoring
+    interval: 10s
