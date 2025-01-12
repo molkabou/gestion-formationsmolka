@@ -69,3 +69,8 @@ helm install grafana prometheus-community/grafana --namespace monitoring
 ```
 ---
 ### 5. Screenshots
+![image](https://github.com/user-attachments/assets/680fa4dd-d592-4aaa-8eb2-49597eaa4c9f)
+![Capture d'écran 2025-01-13 000758](https://github.com/user-attachments/assets/710e1374-04a4-492f-8825-30fba5277273)
+![Capture d'écran 2025-01-13 000549](https://github.com/user-attachments/assets/a2eb2b8e-626e-4af5-9813-9ec0f768516d)
+![Capture d'écran 2025-01-12 234841](https://github.com/user-attachments/assets/b0fb0fc3-132d-4992-bd4a-4c5193b1037c)
+
