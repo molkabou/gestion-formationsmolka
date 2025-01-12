@@ -5,24 +5,27 @@ metadata:
   labels:
     app: gestion-formation
 spec:
-  replicas: 2
+  replicas: 2                 # Nombre de répliques
   selector:
     matchLabels:
-      app: gestion-formation
+      app: gestion-formation  # Doit correspondre aux étiquettes de `template.metadata.labels`
   template:
-    metadata:
-      labels:
-        app: gestion-formation
-    spec:
-      containers:
-      - name: gestion-formation
-        image: your-dockerhub-username/gestion-formation:latest
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9101"
+
+spec:
+  containers:
+  - name: gestion-formation
+    image: molkabouzaida/gestion-formation:latest
+
         ports:
-        - containerPort: 5000
-        env:
+        - containerPort: 6000    # Doit correspondre au port exposé par votre application
+        env:                     # Variables d'environnement pour la configuration de la base de données
         - name: DB_HOST
-          value: mysql
+          value: mysql           # Le service MySQL exposé (nom du Service Kubernetes pour MySQL)
         - name: DB_USER
-          value: root
+          value: root            # Utilisateur de la base de données
         - name: DB_PASSWORD
-          value: root
+          value: root            # Mot de passe de la base de données

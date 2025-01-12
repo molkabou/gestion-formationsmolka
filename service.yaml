@@ -4,9 +4,9 @@ metadata:
   name: gestion-formation-service
 spec:
   selector:
-    app: gestion-formation
+    app: gestion-formation   # Doit correspondre à l'étiquette définie dans le Deployment
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5000
-  type: NodePort
+    - protocol: TCP
+      port: 80               # Port exposé par le Service
+      targetPort: 5000       # Port de l'application dans le conteneur
+  type: NodePort             # Rend le Service accessible via un port sur le nœud
