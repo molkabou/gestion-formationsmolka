@@ -8,11 +8,59 @@ image:
 service:
   type: ClusterIP
   port: 3306
+  annotations: {} # Ajoutez des annotations si nécessaire
+  labels: {}      # Ajoutez des labels si nécessaire
 
 ingress:
   enabled: false
+  annotations: {}  # Annotations pour l'ingress
+  hosts:
+    - host: example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []          # Configurez TLS si nécessaire
 
 persistence:
   enabled: true
+  storageClass: ""  # Définissez une classe de stockage spécifique si nécessaire
   accessMode: ReadWriteOnce
   size: 10Gi
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Ajout de paramètres pour le compte de service
+serviceAccount:
+  create: true
+  name: ""
+
+securityContext:
+  enabled: true
+  fsGroup: 1000
+
+# Liveness et readiness probes
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
